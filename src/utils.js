@@ -1,7 +1,7 @@
-export const fmt = valor => valor == null ? '—' : new Intl.NumberFormat('pt-BR').format(valor);
-export const sum = valores => valores.reduce((acumulado, atual) => acumulado + (Number(atual) || 0), 0);
-export const pctOf = (parte, total) => total ? (parte / total) * 100 : null;
-export const normalizeSearch = texto => texto.trim().toLocaleLowerCase('pt-BR');
+export const formatarNumero = valor => valor == null ? '—' : new Intl.NumberFormat('pt-BR').format(valor);
+export const somar = valores => valores.reduce((acumulado, atual) => acumulado + (Number(atual) || 0), 0);
+export const calcularPercentual = (parte, total) => total ? (parte / total) * 100 : null;
+export const normalizarBusca = texto => texto.trim().toLocaleLowerCase('pt-BR');
 
 export const layoutBase = {
   autosize: true,
@@ -21,7 +21,7 @@ export const plotConfig = {
   modeBarButtonsToAdd: ['select2d', 'lasso2d']
 };
 
-export function clampZoomRange(range, min, max, minSpan, maxSpan, reverse = false) {
+export function limitarIntervaloZoom(range, min, max, minSpan, maxSpan, reverse = false) {
   if (!Array.isArray(range) || range.length !== 2) return null;
   let inicio = Number(range[0]);
   let fim = Number(range[1]);
@@ -49,7 +49,7 @@ export function clampZoomRange(range, min, max, minSpan, maxSpan, reverse = fals
   return reverse ? [fim, inicio] : [inicio, fim];
 }
 
-export function zoomEventRanges(evento, zoomAtual, limites, atualizarZoom) {
+export function atualizarIntervalosZoom(evento, zoomAtual, limites, atualizarZoom) {
   const proximoZoom = { ...zoomAtual };
   let alterado = false;
 
@@ -68,7 +68,7 @@ export function zoomEventRanges(evento, zoomAtual, limites, atualizarZoom) {
 
     if (valorInicial !== undefined && valorFinal !== undefined) {
       const configEixo = limites[eixo];
-      const ajustado = clampZoomRange(
+      const ajustado = limitarIntervaloZoom(
         [valorInicial, valorFinal],
         configEixo.min,
         configEixo.max,
