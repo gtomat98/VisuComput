@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Plot from 'react-plotly.js';
 import { Panel, Empty } from './Panel';
 import { Field, SearchField } from './Field';
-import { GROUPS } from '../constants';
+import { GRUPOS } from '../constants';
 import { layoutBase, plotConfig, atualizarIntervalosZoom, calcularPercentual, normalizarBusca } from '../utils';
 
 export default function RankingTab({
@@ -21,10 +21,10 @@ export default function RankingTab({
   setBuscaUnidade,
   setGrupoCalor
 }) {
-  const [zoomRanking, setRankZoom] = useState({});
+  const [zoomRanking, setZoomRanking] = useState({});
 
   useEffect(() => {
-    setRankZoom({});
+    setZoomRanking({});
   }, [grupoRanking, racaRanking, tipoUnidade, unidadeSelecionada]);
 
   const ranking = useMemo(() => {
@@ -154,7 +154,7 @@ export default function RankingTab({
                 onRelayout={evento => atualizarIntervalosZoom(evento, zoomRanking, {
                   xaxis: { min: 0, max: maiorPercentual, minSpan: Math.max(0.001, maiorPercentual / 100), maxSpan: maiorPercentual },
                   yaxis: { min: -0.5, max: ranking.length - 0.5, minSpan: 1, maxSpan: ranking.length, reverse: true }
-                }, setRankZoom)}
+                }, setZoomRanking)}
                 onClick={evento => {
                   const unidadeClicada = evento.points?.[0]?.y;
                   if (unidadeClicada) {
