@@ -161,13 +161,13 @@ export default function HistoricoTab({ historico }) {
             <div className="slot-chips">
               {MARCOS_HISTORICOS.map(marco => (
                 <button
-                  key={marco.ano}
+                  key={marco.year}
                   type="button"
-                  className={`chip-milestone ${anoBase === marco.ano ? 'active' : ''}`}
+                  className={`chip-milestone ${anoBase === marco.year ? 'active' : ''}`}
                   onClick={() => {
-                    setAnoBase(marco.ano);
-                    if (marco.ano < anoInicial) setAnoInicial(marco.ano);
-                    if (marco.ano > anoFinal) setAnoFinal(marco.ano);
+                    setAnoBase(marco.year);
+                    if (marco.year < anoInicial) setAnoInicial(marco.year);
+                    if (marco.year > anoFinal) setAnoFinal(marco.year);
                   }}
                 >
                   {marco.label}
