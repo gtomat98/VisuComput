@@ -1,5 +1,5 @@
 import React from 'react';
-import { fmt } from '../utils';
+import { formatarNumero } from '../utils';
 
 export default function RatioOverlay({
   linhasSelecionadas,
@@ -122,7 +122,7 @@ export default function RatioOverlay({
         </div>
         <div className="ratio-meta-info">
           <span className="ratio-ano-tag">Ano {anoReferencia}</span>
-          <span className="ratio-raw-vals">({fmt(valorNumerador)} ÷ {fmt(valorDenominador)})</span>
+          <span className="ratio-raw-vals">({formatarNumero(valorNumerador)} ÷ {formatarNumero(valorDenominador)})</span>
         </div>
       </div>
     </aside>
