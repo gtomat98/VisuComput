@@ -97,7 +97,7 @@ export default function HistoricoTab({ historico }) {
     <div className="content">
       <div className="section-title">
         <div>
-          <h2>Evolução historicoórica</h2>
+          <h2>Evolução histórica</h2>
           <p>Acompanhe a trajetória da comunidade da USP por contingente absoluto, índice relativo ou ratio dinâmico.</p>
         </div>
         <div className="filters">
@@ -132,7 +132,7 @@ export default function HistoricoTab({ historico }) {
 
       <Panel
         title="População universitária · 1989–2025"
-        sub="Use zoom nos eixos, selecione períodos e clique nas séries para explorar a evolução historicoórica da USP."
+        sub="Use zoom nos eixos, selecione períodos e clique nas séries para explorar a evolução histórica da USP."
       >
         {modoHistorico === 'absoluto' && (
           <div className="historic-toolbar-slot" role="toolbar" aria-label="Atalhos rápidos de período">
