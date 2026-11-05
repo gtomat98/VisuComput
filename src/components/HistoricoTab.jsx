@@ -4,72 +4,72 @@ import { Panel } from './Panel';
 import { Field } from './Field';
 import RatioOverlay from './RatioOverlay';
 import {
-  HIST_GROUPS,
-  HIST_COLORS,
-  HIST_COLORS_MUTED,
-  HISTORIC_MILESTONES,
-  PERIOD_SHORTCUTS,
-  YEAR_MIN,
-  YEAR_MAX
+  GRUPOS_HISTORICOS,
+  CORES_HISTORICO,
+  CORES_HISTORICO_SUAVES,
+  MARCOS_HISTORICOS,
+  ATALHOS_PERIODO,
+  ANO_MINIMO,
+  ANO_MAXIMO
 } from '../constants';
-import { layoutBase, plotConfig, zoomEventRanges } from '../utils';
+import { layoutBase, plotConfig, atualizarIntervalosZoom } from '../utils';
 
-export default function HistoricoTab({ hist }) {
-  const [historicMode, setHistoricMode] = useState('absoluto');
-  const [baseYear, setBaseYear] = useState(YEAR_MIN);
-  const [yearStart, setYearStart] = useState(YEAR_MIN);
-  const [yearEnd, setYearEnd] = useState(YEAR_MAX);
-  const [ratioSelectedLines, setRatioSelectedLines] = useState([]);
-  const [ratioHoverYear, setRatioHoverYear] = useState(null);
-  const [hoveredLine, setHoveredLine] = useState(null);
-  const [historicZoom, setHistoricZoom] = useState({});
+export default function HistoricoTab({ historico }) {
+  const [modoHistorico, setModoHistorico] = useState('absoluto');
+  const [anoBase, setAnoBase] = useState(ANO_MINIMO);
+  const [anoInicial, setAnoInicial] = useState(ANO_MINIMO);
+  const [anoFinal, setAnoFinal] = useState(ANO_MAXIMO);
+  const [linhasRatioSelecionadas, setLinhasRatioSelecionadas] = useState([]);
+  const [anoHoverRatio, setAnoHoverRatio] = useState(null);
+  const [linhaEmFoco, setLinhaEmFoco] = useState(null);
+  const [zoomHistorico, setZoomHistorico] = useState({});
 
   useEffect(() => {
-    setHistoricZoom({});
-  }, [yearStart, yearEnd, historicMode, baseYear, ratioSelectedLines]);
+    setZoomHistorico({});
+  }, [anoInicial, anoFinal, modoHistorico, anoBase, linhasRatioSelecionadas]);
 
-  const historical = useMemo(() => {
-    return HIST_GROUPS.map(grupo => {
-      const todosRegistros = hist
+  const seriesHistoricas = useMemo(() => {
+    return GRUPOS_HISTORICOS.map(grupo => {
+      const registrosGrupo = historico
         .filter(item => item.grupo === grupo && item.total != null)
         .sort((itemA, itemB) => itemA.ano - itemB.ano);
 
-      const objetoBase = todosRegistros.find(item => item.ano === baseYear)
-        || todosRegistros.find(item => item.ano >= yearStart)
-        || todosRegistros[0];
-      const totalBase = objetoBase?.total;
+      const registroBase = registrosGrupo.find(item => item.ano === anoBase)
+        || registrosGrupo.find(item => item.ano >= anoInicial)
+        || registrosGrupo[0];
+      const totalAnoBase = registroBase?.total;
 
-      const registrosPeriodo = todosRegistros.filter(item => item.ano >= yearStart && item.ano <= yearEnd);
+      const registrosNoPeriodo = registrosGrupo.filter(item => item.ano >= anoInicial && item.ano <= anoFinal);
 
       return {
         name: grupo,
-        x: registrosPeriodo.map(item => item.ano),
-        y: registrosPeriodo.map(item => (
-          historicMode === 'indice' && totalBase ? (item.total / totalBase) * 100 : item.total
+        x: registrosNoPeriodo.map(item => item.ano),
+        y: registrosNoPeriodo.map(item => (
+          modoHistorico === 'indice' && totalAnoBase ? (item.total / totalAnoBase) * 100 : item.total
         ))
       };
     });
-  }, [hist, yearStart, yearEnd, historicMode, baseYear]);
+  }, [historico, anoInicial, anoFinal, modoHistorico, anoBase]);
 
-  const historicMaxY = useMemo(() => {
+  const maiorValorHistorico = useMemo(() => {
     let valorMaximo = 0;
-    for (const serie of historical) {
+    for (const serie of seriesHistoricas) {
       for (const valor of serie.y) {
         if (Number.isFinite(valor) && valor > valorMaximo) valorMaximo = valor;
       }
     }
-    return valorMaximo > 0 ? valorMaximo * 1.08 : (historicMode === 'indice' ? 120 : 1000);
-  }, [historical, historicMode]);
+    return valorMaximo > 0 ? valorMaximo * 1.08 : (modoHistorico === 'indice' ? 120 : 1000);
+  }, [seriesHistoricas, modoHistorico]);
 
-  const historicMaxLimit = useMemo(() => {
-    const piso = historicMode === 'indice' ? 500 : 70000;
-    return Math.max(historicMaxY * 1.5, piso);
-  }, [historicMaxY, historicMode]);
+  const limiteMaximoHistorico = useMemo(() => {
+    const piso = modoHistorico === 'indice' ? 500 : 70000;
+    return Math.max(maiorValorHistorico * 1.5, piso);
+  }, [maiorValorHistorico, modoHistorico]);
 
-  const handleRatioLineSelect = nomeLinha => {
-    if (!nomeLinha || !HIST_GROUPS.includes(nomeLinha)) return;
+  const selecionarLinhaRatio = nomeLinha => {
+    if (!nomeLinha || !GRUPOS_HISTORICOS.includes(nomeLinha)) return;
 
-    setRatioSelectedLines(selecionadas => {
+    setLinhasRatioSelecionadas(selecionadas => {
       if (selecionadas.length === 0) return [nomeLinha];
       if (selecionadas.length === 1) {
         return selecionadas[0] === nomeLinha ? [] : [selecionadas[0], nomeLinha];
@@ -78,37 +78,37 @@ export default function HistoricoTab({ hist }) {
     });
   };
 
-  const handleInvertRatio = () => {
-    if (ratioSelectedLines.length === 2) {
-      setRatioSelectedLines([ratioSelectedLines[1], ratioSelectedLines[0]]);
+  const inverterRatio = () => {
+    if (linhasRatioSelecionadas.length === 2) {
+      setLinhasRatioSelecionadas([linhasRatioSelecionadas[1], linhasRatioSelecionadas[0]]);
     }
   };
 
-  const handleClearRatio = () => {
-    setRatioSelectedLines([]);
+  const limparRatio = () => {
+    setLinhasRatioSelecionadas([]);
   };
 
   const anosDisponiveis = Array.from(
-    { length: YEAR_MAX - YEAR_MIN + 1 },
-    (_, posicao) => YEAR_MIN + posicao
+    { length: ANO_MAXIMO - ANO_MINIMO + 1 },
+    (_, posicao) => ANO_MINIMO + posicao
   );
 
   return (
     <div className="content">
       <div className="section-title">
         <div>
-          <h2>Evolução histórica</h2>
+          <h2>Evolução historicoórica</h2>
           <p>Acompanhe a trajetória da comunidade da USP por contingente absoluto, índice relativo ou ratio dinâmico.</p>
         </div>
         <div className="filters">
           <Field label="Modo de análise">
             <select
-              value={historicMode}
+              value={modoHistorico}
               onChange={evento => {
-                setHistoricMode(evento.target.value);
+                setModoHistorico(evento.target.value);
                 if (evento.target.value !== 'razao') {
-                  setRatioSelectedLines([]);
-                  setHoveredLine(null);
+                  setLinhasRatioSelecionadas([]);
+                  setLinhaEmFoco(null);
                 }
               }}
             >
@@ -118,9 +118,9 @@ export default function HistoricoTab({ hist }) {
             </select>
           </Field>
 
-          {historicMode === 'indice' && (
+          {modoHistorico === 'indice' && (
             <Field label="Ano-base (100)">
-              <select value={baseYear} onChange={evento => setBaseYear(Number(evento.target.value))}>
+              <select value={anoBase} onChange={evento => setAnoBase(Number(evento.target.value))}>
                 {anosDisponiveis.map(ano => (
                   <option key={ano} value={ano}>{ano}</option>
                 ))}
@@ -132,20 +132,20 @@ export default function HistoricoTab({ hist }) {
 
       <Panel
         title="População universitária · 1989–2025"
-        sub="Use zoom nos eixos, selecione períodos e clique nas séries para explorar a evolução histórica da USP."
+        sub="Use zoom nos eixos, selecione períodos e clique nas séries para explorar a evolução historicoórica da USP."
       >
-        {historicMode === 'absoluto' && (
+        {modoHistorico === 'absoluto' && (
           <div className="historic-toolbar-slot" role="toolbar" aria-label="Atalhos rápidos de período">
             <span className="slot-title">Atalhos de período:</span>
             <div className="slot-chips">
-              {PERIOD_SHORTCUTS.map(periodo => (
+              {ATALHOS_PERIODO.map(periodo => (
                 <button
                   key={periodo.label}
                   type="button"
-                  className={`chip-milestone ${yearStart === periodo.start && yearEnd === periodo.end ? 'active' : ''}`}
+                  className={`chip-milestone ${anoInicial === periodo.start && anoFinal === periodo.end ? 'active' : ''}`}
                   onClick={() => {
-                    setYearStart(periodo.start);
-                    setYearEnd(periodo.end);
+                    setAnoInicial(periodo.start);
+                    setAnoFinal(periodo.end);
                   }}
                 >
                   {periodo.label}
@@ -155,19 +155,19 @@ export default function HistoricoTab({ hist }) {
           </div>
         )}
 
-        {historicMode === 'indice' && (
-          <div className="historic-toolbar-slot" role="toolbar" aria-label="Marcos históricos de referência">
-            <span className="slot-title">Marcos históricos:</span>
+        {modoHistorico === 'indice' && (
+          <div className="historic-toolbar-slot" role="toolbar" aria-label="Marcos historicoóricos de referência">
+            <span className="slot-title">Marcos historicoóricos:</span>
             <div className="slot-chips">
-              {HISTORIC_MILESTONES.map(marco => (
+              {MARCOS_HISTORICOS.map(marco => (
                 <button
-                  key={marco.year}
+                  key={marco.ano}
                   type="button"
-                  className={`chip-milestone ${baseYear === marco.year ? 'active' : ''}`}
+                  className={`chip-milestone ${anoBase === marco.ano ? 'active' : ''}`}
                   onClick={() => {
-                    setBaseYear(marco.year);
-                    if (marco.year < yearStart) setYearStart(marco.year);
-                    if (marco.year > yearEnd) setYearEnd(marco.year);
+                    setAnoBase(marco.ano);
+                    if (marco.ano < anoInicial) setAnoInicial(marco.ano);
+                    if (marco.ano > anoFinal) setAnoFinal(marco.ano);
                   }}
                 >
                   {marco.label}
@@ -177,16 +177,16 @@ export default function HistoricoTab({ hist }) {
           </div>
         )}
 
-        {historicMode === 'razao' && (
+        {modoHistorico === 'razao' && (
           <div className="historic-toolbar-slot" role="toolbar" aria-label="Linhas disponíveis para relação">
             <span className="slot-title">Linhas do gráfico:</span>
             <div className="slot-chips">
-              {HIST_GROUPS.map(grupo => {
-                const ehNumerador = ratioSelectedLines[0] === grupo;
-                const ehDenominador = ratioSelectedLines[1] === grupo;
+              {GRUPOS_HISTORICOS.map(grupo => {
+                const ehNumerador = linhasRatioSelecionadas[0] === grupo;
+                const ehDenominador = linhasRatioSelecionadas[1] === grupo;
                 const estaSelecionada = ehNumerador || ehDenominador;
-                const estaHover = hoveredLine === grupo;
-                const corLinha = HIST_COLORS[grupo] || '#8c9fe8';
+                const estaHover = linhaEmFoco === grupo;
+                const corLinha = CORES_HISTORICO[grupo] || '#8c9fe8';
 
                 return (
                   <button
@@ -198,9 +198,9 @@ export default function HistoricoTab({ hist }) {
                       color: estaSelecionada ? '#ffffff' : (estaHover ? '#eef5fa' : '#a9bac6'),
                       backgroundColor: estaSelecionada ? `${corLinha}33` : (estaHover ? 'rgba(255,255,255,0.08)' : 'transparent')
                     }}
-                    onClick={() => handleRatioLineSelect(grupo)}
-                    onMouseEnter={() => setHoveredLine(grupo)}
-                    onMouseLeave={() => setHoveredLine(null)}
+                    onClick={() => selecionarLinhaRatio(grupo)}
+                    onMouseEnter={() => setLinhaEmFoco(grupo)}
+                    onMouseLeave={() => setLinhaEmFoco(null)}
                   >
                     <span className="chip-color-dot" style={{ backgroundColor: corLinha }} />
                     {grupo}
@@ -209,8 +209,8 @@ export default function HistoricoTab({ hist }) {
                   </button>
                 );
               })}
-              {ratioSelectedLines.length > 0 && (
-                <button type="button" className="ghost ratio-clear-action-btn" onClick={handleClearRatio}>
+              {linhasRatioSelecionadas.length > 0 && (
+                <button type="button" className="ghost ratio-clear-action-btn" onClick={limparRatio}>
                   Limpar seleção
                 </button>
               )}
@@ -223,30 +223,30 @@ export default function HistoricoTab({ hist }) {
             Ano inicial{' '}
             <input
               type="range"
-              min={YEAR_MIN}
-              max={yearEnd}
-              value={yearStart}
-              onChange={evento => setYearStart(Number(evento.target.value))}
+              min={ANO_MINIMO}
+              max={anoFinal}
+              value={anoInicial}
+              onChange={evento => setAnoInicial(Number(evento.target.value))}
             />
-            <b>{yearStart}</b>
+            <b>{anoInicial}</b>
           </label>
           <label>
             Ano final{' '}
             <input
               type="range"
-              min={yearStart}
-              max={YEAR_MAX}
-              value={yearEnd}
-              onChange={evento => setYearEnd(Number(evento.target.value))}
+              min={anoInicial}
+              max={ANO_MAXIMO}
+              value={anoFinal}
+              onChange={evento => setAnoFinal(Number(evento.target.value))}
             />
-            <b>{yearEnd}</b>
+            <b>{anoFinal}</b>
           </label>
           <button
             className="ghost"
             onClick={() => {
-              setYearStart(YEAR_MIN);
-              setYearEnd(YEAR_MAX);
-              if (historicMode === 'indice') setBaseYear(YEAR_MIN);
+              setAnoInicial(ANO_MINIMO);
+              setAnoFinal(ANO_MAXIMO);
+              if (modoHistorico === 'indice') setAnoBase(ANO_MINIMO);
             }}
           >
             Restaurar período
@@ -255,36 +255,36 @@ export default function HistoricoTab({ hist }) {
 
         <div className="historic-plot-wrapper">
           <Plot
-            data={historical.map(serie => {
-              const modoRatio = historicMode === 'razao';
-              const ehNumerador = ratioSelectedLines[0] === serie.name;
-              const ehDenominador = ratioSelectedLines[1] === serie.name;
+            data={seriesHistoricas.map(serie => {
+              const modoRatio = modoHistorico === 'razao';
+              const ehNumerador = linhasRatioSelecionadas[0] === serie.name;
+              const ehDenominador = linhasRatioSelecionadas[1] === serie.name;
               const estaSelecionada = ehNumerador || ehDenominador;
-              const estaHover = modoRatio && hoveredLine === serie.name;
+              const estaHover = modoRatio && linhaEmFoco === serie.name;
 
-              let corLinha = HIST_COLORS[serie.name] || '#e6b84b';
+              let corLinha = CORES_HISTORICO[serie.name] || '#e6b84b';
               let espessuraLinha = 2.5;
               let tamanhoMarcador = 5;
               let opacidade = 1.0;
 
               if (modoRatio) {
                 if (estaSelecionada) {
-                  corLinha = HIST_COLORS[serie.name];
+                  corLinha = CORES_HISTORICO[serie.name];
                   espessuraLinha = 4.0;
                   tamanhoMarcador = 7.5;
                   opacidade = 1.0;
                 } else if (estaHover) {
-                  corLinha = HIST_COLORS[serie.name];
+                  corLinha = CORES_HISTORICO[serie.name];
                   espessuraLinha = 3.2;
                   tamanhoMarcador = 6;
                   opacidade = 0.72;
-                } else if (ratioSelectedLines.length === 0) {
-                  corLinha = HIST_COLORS_MUTED[serie.name];
+                } else if (linhasRatioSelecionadas.length === 0) {
+                  corLinha = CORES_HISTORICO_SUAVES[serie.name];
                   espessuraLinha = 2.0;
                   tamanhoMarcador = 4;
                   opacidade = 0.35;
                 } else {
-                  corLinha = HIST_COLORS_MUTED[serie.name];
+                  corLinha = CORES_HISTORICO_SUAVES[serie.name];
                   espessuraLinha = 1.4;
                   tamanhoMarcador = 3;
                   opacidade = 0.16;
@@ -294,8 +294,8 @@ export default function HistoricoTab({ hist }) {
               let templateHover = 'Ano %{x}<br>' + serie.name + ': <b>%{y:,.0f}</b> pessoas<extra></extra>';
               if (modoRatio) {
                 templateHover = '<b>' + serie.name + '</b><br>Ano %{x}: %{y:,.0f} pessoas<extra></extra>';
-              } else if (historicMode === 'indice') {
-                templateHover = 'Ano %{x}<br>' + serie.name + ': <b>%{y:.1f}</b> (base ' + baseYear + ' = 100)<extra></extra>';
+              } else if (modoHistorico === 'indice') {
+                templateHover = 'Ano %{x}<br>' + serie.name + ': <b>%{y:.1f}</b> (base ' + anoBase + ' = 100)<extra></extra>';
               }
 
               return {
@@ -313,41 +313,41 @@ export default function HistoricoTab({ hist }) {
             })}
             layout={{
               ...layoutBase,
-              hovermode: historicMode === 'razao' ? 'closest' : 'x unified',
-              hoverdistance: historicMode === 'razao' ? 35 : 20,
+              hovermode: modoHistorico === 'razao' ? 'closest' : 'x unified',
+              hoverdistance: modoHistorico === 'razao' ? 35 : 20,
               xaxis: {
                 ...layoutBase.xaxis,
                 title: 'Ano',
                 dtick: 2,
                 autorange: false,
-                range: historicZoom.xaxis || [yearStart, yearEnd],
-                minallowed: YEAR_MIN,
-                maxallowed: YEAR_MAX
+                range: zoomHistorico.xaxis || [anoInicial, anoFinal],
+                minallowed: ANO_MINIMO,
+                maxallowed: ANO_MAXIMO
               },
               yaxis: {
                 ...layoutBase.yaxis,
-                title: historicMode === 'indice'
-                  ? `Índice relativo (${baseYear} = 100)`
+                title: modoHistorico === 'indice'
+                  ? `Índice relativo (${anoBase} = 100)`
                   : 'Número de pessoas',
                 rangemode: 'tozero',
-                range: historicZoom.yaxis || [0, historicMaxY],
+                range: zoomHistorico.yaxis || [0, maiorValorHistorico],
                 minallowed: 0,
-                maxallowed: historicMaxLimit
+                maxallowed: limiteMaximoHistorico
               },
-              shapes: historicMode === 'indice' && baseYear >= yearStart && baseYear <= yearEnd ? [{
+              shapes: modoHistorico === 'indice' && anoBase >= anoInicial && anoBase <= anoFinal ? [{
                 type: 'line',
-                x0: baseYear,
-                x1: baseYear,
+                x0: anoBase,
+                x1: anoBase,
                 y0: 0,
                 y1: 1,
                 yref: 'paper',
                 line: { color: '#e6b84b', width: 1.5, dash: 'dash' }
               }] : [],
-              annotations: historicMode === 'indice' && baseYear >= yearStart && baseYear <= yearEnd ? [{
-                x: baseYear,
+              annotations: modoHistorico === 'indice' && anoBase >= anoInicial && anoBase <= anoFinal ? [{
+                x: anoBase,
                 y: 1,
                 yref: 'paper',
-                text: `Ano-base (${baseYear} = 100)`,
+                text: `Ano-base (${anoBase} = 100)`,
                 showarrow: false,
                 xanchor: 'center',
                 yanchor: 'bottom',
@@ -361,56 +361,56 @@ export default function HistoricoTab({ hist }) {
             config={plotConfig}
             style={{ width: '100%', height: 490 }}
             useResizeHandler
-            onRelayout={evento => zoomEventRanges(evento, historicZoom, {
-              xaxis: { min: yearStart, max: yearEnd, minSpan: 2, maxSpan: Math.max(2, yearEnd - yearStart) },
-              yaxis: { min: 0, max: historicMaxLimit, minSpan: historicMode === 'indice' ? 5 : 500, maxSpan: historicMaxLimit }
-            }, setHistoricZoom)}
+            onRelayout={evento => atualizarIntervalosZoom(evento, zoomHistorico, {
+              xaxis: { min: anoInicial, max: anoFinal, minSpan: 2, maxSpan: Math.max(2, anoFinal - anoInicial) },
+              yaxis: { min: 0, max: limiteMaximoHistorico, minSpan: modoHistorico === 'indice' ? 5 : 500, maxSpan: limiteMaximoHistorico }
+            }, setZoomHistorico)}
             onClick={evento => {
               const pontoClicado = evento.points?.[0];
               if (!pontoClicado) return;
 
-              if (historicMode === 'razao') {
-                const nomeTrace = pontoClicado.data?.name || hoveredLine;
-                if (nomeTrace) handleRatioLineSelect(nomeTrace);
-                if (pontoClicado.x != null) setRatioHoverYear(Number(pontoClicado.x));
+              if (modoHistorico === 'razao') {
+                const nomeTrace = pontoClicado.data?.name || linhaEmFoco;
+                if (nomeTrace) selecionarLinhaRatio(nomeTrace);
+                if (pontoClicado.x != null) setAnoHoverRatio(Number(pontoClicado.x));
                 return;
               }
 
-              if (historicMode === 'indice' && pontoClicado.x != null) {
-                setBaseYear(Number(pontoClicado.x));
+              if (modoHistorico === 'indice' && pontoClicado.x != null) {
+                setAnoBase(Number(pontoClicado.x));
               }
             }}
             onHover={evento => {
               const pontoSobrevoado = evento.points?.[0];
-              if (historicMode === 'razao' && pontoSobrevoado) {
-                if (pontoSobrevoado.data?.name) setHoveredLine(pontoSobrevoado.data.name);
-                if (pontoSobrevoado.x != null) setRatioHoverYear(Number(pontoSobrevoado.x));
+              if (modoHistorico === 'razao' && pontoSobrevoado) {
+                if (pontoSobrevoado.data?.name) setLinhaEmFoco(pontoSobrevoado.data.name);
+                if (pontoSobrevoado.x != null) setAnoHoverRatio(Number(pontoSobrevoado.x));
               }
             }}
             onUnhover={() => {
-              if (historicMode === 'razao') setHoveredLine(null);
+              if (modoHistorico === 'razao') setLinhaEmFoco(null);
             }}
           />
 
-          {historicMode === 'razao' && (
+          {modoHistorico === 'razao' && (
             <RatioOverlay
-              selectedLines={ratioSelectedLines}
-              onInvert={handleInvertRatio}
-              onClear={handleClearRatio}
-              year={ratioHoverYear || yearEnd}
-              hist={hist}
-              yearStart={yearStart}
-              yearEnd={yearEnd}
-              colors={HIST_COLORS}
+              linhasSelecionadas={linhasRatioSelecionadas}
+              aoInverter={inverterRatio}
+              aoLimpar={limparRatio}
+              ano={anoHoverRatio || anoFinal}
+              historico={historico}
+              anoInicial={anoInicial}
+              anoFinal={anoFinal}
+              cores={CORES_HISTORICO}
             />
           )}
         </div>
 
         <div className="note">
-          {historicMode === 'razao'
+          {modoHistorico === 'razao'
             ? 'Modo Ratio Dinâmico: selecione duas linhas com o mouse para calcular a proporção entre elas. A primeira linha define o numerador e a segunda o denominador; inverta a ordem a qualquer momento.'
-            : historicMode === 'indice'
-              ? `Modo de Índice Relativo: cada série é fixada em 100 no ano-base ${baseYear}. Valores acima de 100 indicam crescimento acumulado em relação à referência; valores abaixo indicam redução.`
+            : modoHistorico === 'indice'
+              ? `Modo de Índice Relativo: cada série é fixada em 100 no ano-base ${anoBase}. Valores acima de 100 indicam crescimento acumulado em relação à referência; valores abaixo indicam redução.`
               : 'Série Histórica Oficial: contingente de alunos, docentes e servidores da USP ao longo dos anos. Use a seleção de anos ou os atalhos para focar em períodos específicos.'}
         </div>
       </Panel>
