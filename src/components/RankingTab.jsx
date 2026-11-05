@@ -68,9 +68,8 @@ export default function RankingTab({
     ));
   }, [dem, rankGroup, rankRace, unitType, unitSearch]);
 
-  const rankTop = ranking;
-  const rankScaleMax = Math.max(0.01, ...rankTop.map(item => item.percentual)) * 1.14;
-  const rankPlotHeight = Math.max(540, rankTop.length * 28 + 90);
+  const rankScaleMax = Math.max(0.01, ...ranking.map(item => item.percentual)) * 1.14;
+  const rankPlotHeight = Math.max(540, ranking.length * 28 + 90);
 
   return (
     <div className="content">
@@ -104,23 +103,23 @@ export default function RankingTab({
         title={`${rankRace} · ${rankGroup}`}
         sub="Ordenado da maior para a menor participação. Clique em uma barra para selecionar a unidade e localizá-la no mapa de calor."
       >
-        {rankTop.length ? (
+        {ranking.length ? (
           <div className="ranking-wrapper">
             <div className="ranking-scroll" role="region" aria-label="Ranking de participação racial; use a rolagem vertical para ver todas as unidades">
               <Plot
                 data={[{
                   type: 'bar',
                   orientation: 'h',
-                  x: rankTop.map(item => item.percentual),
-                  y: rankTop.map(item => item.unidade),
-                  text: rankTop.map(item => `${item.percentual.toFixed(1)}%`),
+                  x: ranking.map(item => item.percentual),
+                  y: ranking.map(item => item.unidade),
+                  text: ranking.map(item => `${item.percentual.toFixed(1)}%`),
                   textposition: 'outside',
                   textfont: { family: 'DM Mono, monospace', size: 10, color: '#c2ced7' },
                   cliponaxis: false,
-                  customdata: rankTop.map(item => [item.quantidade, item.total]),
+                  customdata: ranking.map(item => [item.quantidade, item.total]),
                   marker: {
-                    color: rankTop.map(item => item.unidade === selectedUnit ? '#e6b84b' : '#4c9bc8'),
-                    line: { color: '#dce8ef', width: rankTop.map(item => item.unidade === selectedUnit ? 1.5 : 0) }
+                    color: ranking.map(item => item.unidade === selectedUnit ? '#e6b84b' : '#4c9bc8'),
+                    line: { color: '#dce8ef', width: ranking.map(item => item.unidade === selectedUnit ? 1.5 : 0) }
                   },
                   hovertemplate: '%{y}<br>Participação: %{x:.2f}%<br>Quantidade: %{customdata[0]:,.0f}<br>Total da população: %{customdata[1]:,.0f}<extra></extra>'
                 }]}
@@ -141,9 +140,9 @@ export default function RankingTab({
                     title: 'Unidade',
                     automargin: true,
                     autorange: 'reversed',
-                    range: rankZoom.yaxis || [rankTop.length - 0.5, -0.5],
+                    range: rankZoom.yaxis || [ranking.length - 0.5, -0.5],
                     minallowed: -0.5,
-                    maxallowed: rankTop.length - 0.5,
+                    maxallowed: ranking.length - 0.5,
                     tickfont: { size: 10.5 }
                   },
                   margin: { l: 155, r: 45, t: 20, b: 65 },
@@ -154,7 +153,7 @@ export default function RankingTab({
                 useResizeHandler
                 onRelayout={evento => zoomEventRanges(evento, rankZoom, {
                   xaxis: { min: 0, max: rankScaleMax, minSpan: Math.max(0.001, rankScaleMax / 100), maxSpan: rankScaleMax },
-                  yaxis: { min: -0.5, max: rankTop.length - 0.5, minSpan: 1, maxSpan: rankTop.length, reverse: true }
+                  yaxis: { min: -0.5, max: ranking.length - 0.5, minSpan: 1, maxSpan: ranking.length, reverse: true }
                 }, setRankZoom)}
                 onClick={evento => {
                   const unidadeClicada = evento.points?.[0]?.y;
