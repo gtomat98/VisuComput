@@ -81,7 +81,7 @@ export default function RankingTab({
         <div className="filters filters-ranking">
           <Field label="População">
             <select value={grupoRanking} onChange={evento => setGrupoRanking(evento.target.value)}>
-              {GROUPS.map(grupo => <option key={grupo}>{grupo}</option>)}
+              {GRUPOS.map(grupo => <option key={grupo}>{grupo}</option>)}
             </select>
           </Field>
           <Field label="Raça/cor">
