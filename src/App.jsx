@@ -17,7 +17,7 @@ export default function App() {
   const [buscaUnidade, setBuscaUnidade] = useState('');
 
   useEffect(() => {
-    fetch('/dados/usp.json')
+    fetch('/data/usp.json')
       .then(resposta => {
         if (!resposta.ok) throw new Error('Não foi possível carregar os dados.');
         return resposta.json();
@@ -60,7 +60,7 @@ export default function App() {
     : 'Nenhuma unidade selecionada';
 
   const tabsDisponiveis = [
-    { id: 'historico', rotulo: 'Evolução historicoórica' },
+    { id: 'historico', rotulo: 'Evolução histórica' },
     { id: 'calor', rotulo: 'Diversidade por unidade' },
     { id: 'ranking', rotulo: 'Participação racial' }
   ];
