@@ -34,19 +34,18 @@ export default function HistoricoTab({ hist }) {
         .filter(item => item.grupo === grupo && item.total != null)
         .sort((itemA, itemB) => itemA.ano - itemB.ano);
 
-      const objetoBase = todosRegistros.find(item => item.ano === baseYear);
+      const objetoBase = todosRegistros.find(item => item.ano === baseYear)
+        || todosRegistros.find(item => item.ano >= yearStart)
+        || todosRegistros[0];
       const totalBase = objetoBase?.total;
 
       const registrosPeriodo = todosRegistros.filter(item => item.ano >= yearStart && item.ano <= yearEnd);
 
       return {
         name: grupo,
-        baseDisponivel: Number.isFinite(totalBase) && totalBase > 0,
         x: registrosPeriodo.map(item => item.ano),
         y: registrosPeriodo.map(item => (
-          historicMode === 'indice'
-            ? (Number.isFinite(totalBase) && totalBase > 0 ? (item.total / totalBase) * 100 : null)
-            : item.total
+          historicMode === 'indice' && totalBase ? (item.total / totalBase) * 100 : item.total
         ))
       };
     });
@@ -411,7 +410,7 @@ export default function HistoricoTab({ hist }) {
           {historicMode === 'razao'
             ? 'Modo Ratio Dinâmico: selecione duas linhas com o mouse para calcular a proporção entre elas. A primeira linha define o numerador e a segunda o denominador; inverta a ordem a qualquer momento.'
             : historicMode === 'indice'
-              ? `Modo de Índice Relativo: cada série é fixada em 100 no ano-base ${baseYear}. Valores acima de 100 indicam crescimento acumulado em relação à referência; valores abaixo indicam redução.${historical.some(serie => !serie.baseDisponivel) ? ' Algumas séries não possuem registro nesse ano-base e não são exibidas.' : ''}`
+              ? `Modo de Índice Relativo: cada série é fixada em 100 no ano-base ${baseYear}. Valores acima de 100 indicam crescimento acumulado em relação à referência; valores abaixo indicam redução.`
               : 'Série Histórica Oficial: contingente de alunos, docentes e servidores da USP ao longo dos anos. Use a seleção de anos ou os atalhos para focar em períodos específicos.'}
         </div>
       </Panel>
