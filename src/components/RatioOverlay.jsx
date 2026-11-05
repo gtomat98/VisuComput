@@ -2,16 +2,16 @@ import React from 'react';
 import { fmt } from '../utils';
 
 export default function RatioOverlay({
-  selectedLines,
-  onInvert,
-  onClear,
-  year,
-  hist,
-  yearStart,
-  yearEnd,
-  colors
+  linhasSelecionadas,
+  aoInverter,
+  aoLimpar,
+  ano,
+  historico,
+  anoInicial,
+  anoFinal,
+  cores
 }) {
-  if (selectedLines.length === 0) {
+  if (linhasSelecionadas.length === 0) {
     return (
       <aside className="ratio-overlay-card ratio-overlay-hint" aria-label="Instruções para cálculo de ratio">
         <div className="ratio-badge-row">
@@ -25,15 +25,15 @@ export default function RatioOverlay({
     );
   }
 
-  if (selectedLines.length === 1) {
-    const nomeNumerador = selectedLines[0];
-    const corNumerador = colors[nomeNumerador] || '#e6b84b';
+  if (linhasSelecionadas.length === 1) {
+    const nomeNumerador = linhasSelecionadas[0];
+    const corNumerador = cores[nomeNumerador] || '#e6b84b';
 
     return (
       <aside className="ratio-overlay-card ratio-overlay-step1" aria-label="Selecione o denominador">
         <div className="ratio-badge-row">
           <span className="ratio-step-badge">Filtro por Ratio · Passo 2 de 2</span>
-          <button type="button" className="ratio-mini-text-btn" onClick={onClear}>Trocar linha</button>
+          <button type="button" className="ratio-mini-text-btn" onClick={aoLimpar}>Trocar linha</button>
         </div>
         <div className="ratio-instruction">
           Numerador definido:{' '}
@@ -47,14 +47,14 @@ export default function RatioOverlay({
     );
   }
 
-  const [nomeNumerador, nomeDenominador] = selectedLines;
-  const corNumerador = colors[nomeNumerador] || '#e6b84b';
-  const corDenominador = colors[nomeDenominador] || '#53b6a8';
+  const [nomeNumerador, nomeDenominador] = linhasSelecionadas;
+  const corNumerador = cores[nomeNumerador] || '#e6b84b';
+  const corDenominador = cores[nomeDenominador] || '#53b6a8';
 
-  const anoReferencia = (year >= yearStart && year <= yearEnd) ? year : yearEnd;
+  const anoReferencia = (ano >= anoInicial && ano <= anoFinal) ? ano : anoFinal;
 
-  const registroNumerador = hist.find(item => item.grupo === nomeNumerador && item.ano === anoReferencia);
-  const registroDenominador = hist.find(item => item.grupo === nomeDenominador && item.ano === anoReferencia);
+  const registroNumerador = historico.find(item => item.grupo === nomeNumerador && item.ano === anoReferencia);
+  const registroDenominador = historico.find(item => item.grupo === nomeDenominador && item.ano === anoReferencia);
 
   const valorNumerador = registroNumerador ? registroNumerador.total : 0;
   const valorDenominador = registroDenominador ? registroDenominador.total : 0;
@@ -83,7 +83,7 @@ export default function RatioOverlay({
           <button
             type="button"
             className="ratio-swap-btn"
-            onClick={onInvert}
+            onClick={aoInverter}
             title="Inverter ordem do cálculo (Numerador ⇄ Denominador)"
             aria-label="Inverter ordem do cálculo"
           >
@@ -92,7 +92,7 @@ export default function RatioOverlay({
           <button
             type="button"
             className="ratio-reset-btn"
-            onClick={onClear}
+            onClick={aoLimpar}
             title="Limpar seleção e escolher outras linhas"
             aria-label="Limpar seleção"
           >
@@ -121,7 +121,7 @@ export default function RatioOverlay({
           </span>
         </div>
         <div className="ratio-meta-info">
-          <span className="ratio-year-tag">Ano {anoReferencia}</span>
+          <span className="ratio-ano-tag">Ano {anoReferencia}</span>
           <span className="ratio-raw-vals">({fmt(valorNumerador)} ÷ {fmt(valorDenominador)})</span>
         </div>
       </div>
