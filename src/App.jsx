@@ -5,62 +5,62 @@ import CalorTab from './components/CalorTab';
 import RankingTab from './components/RankingTab';
 
 export default function App() {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('historico');
+  const [dados, setDados] = useState(null);
+  const [erro, setErro] = useState('');
+  const [abaAtiva, setAbaAtiva] = useState('historico');
 
-  const [heatGroup, setHeatGroup] = useState('Alunos');
-  const [unitType, setUnitType] = useState('Todos');
-  const [rankGroup, setRankGroup] = useState('Alunos');
-  const [rankRace, setRankRace] = useState('Preta');
-  const [selectedUnit, setSelectedUnit] = useState('');
-  const [unitSearch, setUnitSearch] = useState('');
+  const [grupoCalor, setGrupoCalor] = useState('Alunos');
+  const [tipoUnidade, setTipoUnidade] = useState('Todos');
+  const [grupoRanking, setGrupoRanking] = useState('Alunos');
+  const [racaRanking, setRacaRanking] = useState('Preta');
+  const [unidadeSelecionada, setUnidadeSelecionada] = useState('');
+  const [buscaUnidade, setBuscaUnidade] = useState('');
 
   useEffect(() => {
-    fetch('/data/usp.json')
+    fetch('/dados/usp.json')
       .then(resposta => {
         if (!resposta.ok) throw new Error('Não foi possível carregar os dados.');
         return resposta.json();
       })
-      .then(dadosCarregados => setData(dadosCarregados))
-      .catch(erro => setError(erro.message));
+      .then(dadosCarregados => setDados(dadosCarregados))
+      .catch(erro => setErro(erro.message));
   }, []);
 
-  const demografia = data?.demografia || [];
-  const historico = data?.historico || [];
-  const racas = data?.racas || [];
+  const demografia = dados?.demografia || [];
+  const historico = dados?.historico || [];
+  const racas = dados?.racas || [];
 
-  const unitTypes = useMemo(() => {
+  const tiposUnidade = useMemo(() => {
     const tipos = new Set(demografia.map(item => item.tipoUnidade));
     return Array.from(tipos).sort((tipoA, tipoB) => tipoA.localeCompare(tipoB, 'pt-BR'));
   }, [demografia]);
 
-  const units = useMemo(() => {
-    const unidadesFiltradas = demografia.filter(item => unitType === 'Todos' || item.tipoUnidade === unitType);
+  const unidades = useMemo(() => {
+    const unidadesFiltradas = demografia.filter(item => tipoUnidade === 'Todos' || item.tipoUnidade === tipoUnidade);
     const listaUnica = Array.from(new Set(unidadesFiltradas.map(item => item.unidade)));
     return listaUnica.sort((unidadeA, unidadeB) => unidadeA.localeCompare(unidadeB, 'pt-BR'));
-  }, [demografia, unitType]);
+  }, [demografia, tipoUnidade]);
 
   useEffect(() => {
-    if (selectedUnit && !units.includes(selectedUnit)) {
-      setSelectedUnit('');
+    if (unidadeSelecionada && !unidades.includes(unidadeSelecionada)) {
+      setUnidadeSelecionada('');
     }
-  }, [units, selectedUnit]);
+  }, [unidades, unidadeSelecionada]);
 
-  if (error) {
-    return <main className="shell"><Empty>{error}</Empty></main>;
+  if (erro) {
+    return <main className="shell"><Empty>{erro}</Empty></main>;
   }
 
-  if (!data) {
+  if (!dados) {
     return <main className="shell"><div className="loading">Carregando dados da USP…</div></main>;
   }
 
-  const selectedLabel = selectedUnit
-    ? `Unidade selecionada: ${selectedUnit}`
+  const rotuloSelecao = unidadeSelecionada
+    ? `Unidade selecionada: ${unidadeSelecionada}`
     : 'Nenhuma unidade selecionada';
 
   const tabsDisponiveis = [
-    { id: 'historico', rotulo: 'Evolução histórica' },
+    { id: 'historico', rotulo: 'Evolução historicoórica' },
     { id: 'calor', rotulo: 'Diversidade por unidade' },
     { id: 'ranking', rotulo: 'Participação racial' }
   ];
@@ -73,9 +73,9 @@ export default function App() {
           <h1>Uma leitura visual da comunidade universitária da USP</h1>
         </div>
         <div className="selection-status">
-          <span>{selectedLabel}</span>
-          {selectedUnit && (
-            <button className="ghost" onClick={() => setSelectedUnit('')}>
+          <span>{rotuloSelecao}</span>
+          {unidadeSelecionada && (
+            <button className="ghost" onClick={() => setUnidadeSelecionada('')}>
               Limpar seleção
             </button>
           )}
@@ -86,8 +86,8 @@ export default function App() {
         {tabsDisponiveis.map((aba, indice) => (
           <button
             key={aba.id}
-            className={activeTab === aba.id ? 'active' : ''}
-            onClick={() => setActiveTab(aba.id)}
+            className={abaAtiva === aba.id ? 'active' : ''}
+            onClick={() => setAbaAtiva(aba.id)}
           >
             <span className="tab-number">0{indice + 1}</span>
             {aba.rotulo}
@@ -95,44 +95,44 @@ export default function App() {
         ))}
       </nav>
 
-      {activeTab === 'historico' && (
-        <HistoricoTab hist={historico} />
+      {abaAtiva === 'historico' && (
+        <HistoricoTab historico={historico} />
       )}
 
-      {activeTab === 'calor' && (
+      {abaAtiva === 'calor' && (
         <CalorTab
-          dem={demografia}
-          races={racas}
-          heatGroup={heatGroup}
-          setHeatGroup={setHeatGroup}
-          unitType={unitType}
-          setUnitType={setUnitType}
-          unitTypes={unitTypes}
-          selectedUnit={selectedUnit}
-          setSelectedUnit={setSelectedUnit}
-          unitSearch={unitSearch}
-          setUnitSearch={setUnitSearch}
-          setRankRace={setRankRace}
-          setRankGroup={setRankGroup}
+          demografia={demografia}
+          racas={racas}
+          grupoCalor={grupoCalor}
+          setGrupoCalor={setGrupoCalor}
+          tipoUnidade={tipoUnidade}
+          setTipoUnidade={setTipoUnidade}
+          tiposUnidade={tiposUnidade}
+          unidadeSelecionada={unidadeSelecionada}
+          setUnidadeSelecionada={setUnidadeSelecionada}
+          buscaUnidade={buscaUnidade}
+          setBuscaUnidade={setBuscaUnidade}
+          setRacaRanking={setRacaRanking}
+          setGrupoRanking={setGrupoRanking}
         />
       )}
 
-      {activeTab === 'ranking' && (
+      {abaAtiva === 'ranking' && (
         <RankingTab
-          dem={demografia}
-          races={racas}
-          rankGroup={rankGroup}
-          setRankGroup={setRankGroup}
-          rankRace={rankRace}
-          setRankRace={setRankRace}
-          unitType={unitType}
-          setUnitType={setUnitType}
-          unitTypes={unitTypes}
-          selectedUnit={selectedUnit}
-          setSelectedUnit={setSelectedUnit}
-          unitSearch={unitSearch}
-          setUnitSearch={setUnitSearch}
-          setHeatGroup={setHeatGroup}
+          demografia={demografia}
+          racas={racas}
+          grupoRanking={grupoRanking}
+          setGrupoRanking={setGrupoRanking}
+          racaRanking={racaRanking}
+          setRacaRanking={setRacaRanking}
+          tipoUnidade={tipoUnidade}
+          setTipoUnidade={setTipoUnidade}
+          tiposUnidade={tiposUnidade}
+          unidadeSelecionada={unidadeSelecionada}
+          setUnidadeSelecionada={setUnidadeSelecionada}
+          buscaUnidade={buscaUnidade}
+          setBuscaUnidade={setBuscaUnidade}
+          setGrupoCalor={setGrupoCalor}
         />
       )}
 
