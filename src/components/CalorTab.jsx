@@ -3,7 +3,7 @@ import Plot from 'react-plotly.js';
 import { Panel, Empty } from './Panel';
 import { Field, SearchField } from './Field';
 import HeatmapLegend from './HeatmapLegend';
-import { GROUPS } from '../constants';
+import { GRUPOS } from '../constants';
 import { layoutBase, plotConfig, atualizarIntervalosZoom, somar, calcularPercentual, normalizarBusca } from '../utils';
 
 export default function CalorTab({
@@ -21,10 +21,10 @@ export default function CalorTab({
   setRacaRanking,
   setGrupoRanking
 }) {
-  const [zoomMapa, setHeatZoom] = useState({});
+  const [zoomMapa, setZoomMapa] = useState({});
 
   useEffect(() => {
-    setHeatZoom({});
+    setZoomMapa({});
   }, [grupoCalor, tipoUnidade, unidadeSelecionada]);
 
   const dadosMapa = useMemo(() => {
@@ -150,7 +150,7 @@ export default function CalorTab({
                 onRelayout={evento => atualizarIntervalosZoom(evento, zoomMapa, {
                   xaxis: { min: -0.5, max: dadosMapa.unidades.length - 0.5, minSpan: 1, maxSpan: dadosMapa.unidades.length },
                   yaxis: { min: -0.5, max: racas.length - 0.5, minSpan: 1, maxSpan: racas.length }
-                }, setHeatZoom)}
+                }, setZoomMapa)}
                 onClick={evento => {
                   const pontoClicado = evento.points?.[0];
                   if (pontoClicado) {
