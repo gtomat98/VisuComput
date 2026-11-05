@@ -1,5 +1,10 @@
 export const GROUPS = ['Alunos', 'Docentes', 'Servidores'];
 
+export const RACE_COLORS = {
+  'Amarela': '#e6b84b', 'Branca': '#d8e2eb', 'Indígena': '#8b6db0',
+  'Parda': '#d28a55', 'Preta': '#b84c58', 'Não informada': '#71869a'
+};
+
 export const HIST_GROUPS = [
   'Alunos de graduação',
   'Alunos de pós-graduação',
