@@ -3,36 +3,36 @@ import Plot from 'react-plotly.js';
 import { Panel, Empty } from './Panel';
 import { Field, SearchField } from './Field';
 import { GROUPS } from '../constants';
-import { layoutBase, plotConfig, zoomEventRanges, pctOf, normalizeSearch } from '../utils';
+import { layoutBase, plotConfig, atualizarIntervalosZoom, calcularPercentual, normalizarBusca } from '../utils';
 
 export default function RankingTab({
-  dem,
-  races,
-  rankGroup,
-  setRankGroup,
-  rankRace,
-  setRankRace,
-  unitType,
-  setUnitType,
-  unitTypes,
-  selectedUnit,
-  setSelectedUnit,
-  unitSearch,
-  setUnitSearch,
-  setHeatGroup
+  demografia,
+  racas,
+  grupoRanking,
+  setGrupoRanking,
+  racaRanking,
+  setRacaRanking,
+  tipoUnidade,
+  setTipoUnidade,
+  tiposUnidade,
+  unidadeSelecionada,
+  setUnidadeSelecionada,
+  buscaUnidade,
+  setBuscaUnidade,
+  setGrupoCalor
 }) {
-  const [rankZoom, setRankZoom] = useState({});
+  const [zoomRanking, setRankZoom] = useState({});
 
   useEffect(() => {
     setRankZoom({});
-  }, [rankGroup, rankRace, unitType, selectedUnit]);
+  }, [grupoRanking, racaRanking, tipoUnidade, unidadeSelecionada]);
 
   const ranking = useMemo(() => {
-    const termoBusca = normalizeSearch(unitSearch);
+    const termoBusca = normalizarBusca(buscaUnidade);
 
-    const filtrados = dem.filter(registro => {
-      if (registro.grupo !== rankGroup) return false;
-      if (unitType !== 'Todos' && registro.tipoUnidade !== unitType) return false;
+    const filtrados = demografia.filter(registro => {
+      if (registro.grupo !== grupoRanking) return false;
+      if (tipoUnidade !== 'Todos' && registro.tipoUnidade !== tipoUnidade) return false;
       if (termoBusca && !registro.unidade.toLocaleLowerCase('pt-BR').includes(termoBusca)) return false;
       return true;
     });
@@ -45,14 +45,14 @@ export default function RankingTab({
       const acumulador = mapaTotais.get(linha.unidade);
       const quantidade = Number(linha.total) || 0;
       acumulador.total += quantidade;
-      if (linha.raca === rankRace) {
+      if (linha.raca === racaRanking) {
         acumulador.raca += quantidade;
       }
     }
 
     const resultado = [];
     for (const [unidade, contagem] of mapaTotais.entries()) {
-      const percentual = pctOf(contagem.raca, contagem.total);
+      const percentual = calcularPercentual(contagem.raca, contagem.total);
       if (percentual != null) {
         resultado.push({
           unidade,
@@ -66,11 +66,10 @@ export default function RankingTab({
     return resultado.sort((itemA, itemB) => (
       itemB.percentual - itemA.percentual || itemA.unidade.localeCompare(itemB.unidade, 'pt-BR')
     ));
-  }, [dem, rankGroup, rankRace, unitType, unitSearch]);
+  }, [demografia, grupoRanking, racaRanking, tipoUnidade, buscaUnidade]);
 
-  const rankTop = ranking;
-  const rankScaleMax = Math.max(0.01, ...rankTop.map(item => item.percentual)) * 1.14;
-  const rankPlotHeight = Math.max(540, rankTop.length * 28 + 90);
+  const maiorPercentual = Math.max(0.01, ...ranking.map(item => item.percentual)) * 1.14;
+  const alturaGrafico = Math.max(540, ranking.length * 28 + 90);
 
   return (
     <div className="content">
@@ -81,46 +80,46 @@ export default function RankingTab({
         </div>
         <div className="filters filters-ranking">
           <Field label="População">
-            <select value={rankGroup} onChange={evento => setRankGroup(evento.target.value)}>
+            <select value={grupoRanking} onChange={evento => setGrupoRanking(evento.target.value)}>
               {GROUPS.map(grupo => <option key={grupo}>{grupo}</option>)}
             </select>
           </Field>
           <Field label="Raça/cor">
-            <select value={rankRace} onChange={evento => setRankRace(evento.target.value)}>
-              {races.map(raca => <option key={raca}>{raca}</option>)}
+            <select value={racaRanking} onChange={evento => setRacaRanking(evento.target.value)}>
+              {racas.map(raca => <option key={raca}>{raca}</option>)}
             </select>
           </Field>
           <Field label="Categoria de unidade">
-            <select value={unitType} onChange={evento => setUnitType(evento.target.value)}>
+            <select value={tipoUnidade} onChange={evento => setTipoUnidade(evento.target.value)}>
               <option value="Todos">Todos</option>
-              {unitTypes.map(tipo => <option key={tipo}>{tipo}</option>)}
+              {tiposUnidade.map(tipo => <option key={tipo}>{tipo}</option>)}
             </select>
           </Field>
-          <SearchField value={unitSearch} onChange={setUnitSearch} />
+          <SearchField value={buscaUnidade} onChange={setBuscaUnidade} />
         </div>
       </div>
 
       <Panel
-        title={`${rankRace} · ${rankGroup}`}
+        title={`${racaRanking} · ${grupoRanking}`}
         sub="Ordenado da maior para a menor participação. Clique em uma barra para selecionar a unidade e localizá-la no mapa de calor."
       >
-        {rankTop.length ? (
+        {ranking.length ? (
           <div className="ranking-wrapper">
             <div className="ranking-scroll" role="region" aria-label="Ranking de participação racial; use a rolagem vertical para ver todas as unidades">
               <Plot
                 data={[{
                   type: 'bar',
                   orientation: 'h',
-                  x: rankTop.map(item => item.percentual),
-                  y: rankTop.map(item => item.unidade),
-                  text: rankTop.map(item => `${item.percentual.toFixed(1)}%`),
+                  x: ranking.map(item => item.percentual),
+                  y: ranking.map(item => item.unidade),
+                  text: ranking.map(item => `${item.percentual.toFixed(1)}%`),
                   textposition: 'outside',
                   textfont: { family: 'DM Mono, monospace', size: 10, color: '#c2ced7' },
                   cliponaxis: false,
-                  customdata: rankTop.map(item => [item.quantidade, item.total]),
+                  customdata: ranking.map(item => [item.quantidade, item.total]),
                   marker: {
-                    color: rankTop.map(item => item.unidade === selectedUnit ? '#e6b84b' : '#4c9bc8'),
-                    line: { color: '#dce8ef', width: rankTop.map(item => item.unidade === selectedUnit ? 1.5 : 0) }
+                    color: ranking.map(item => item.unidade === unidadeSelecionada ? '#e6b84b' : '#4c9bc8'),
+                    line: { color: '#dce8ef', width: ranking.map(item => item.unidade === unidadeSelecionada ? 1.5 : 0) }
                   },
                   hovertemplate: '%{y}<br>Participação: %{x:.2f}%<br>Quantidade: %{customdata[0]:,.0f}<br>Total da população: %{customdata[1]:,.0f}<extra></extra>'
                 }]}
@@ -131,9 +130,9 @@ export default function RankingTab({
                     ...layoutBase.xaxis,
                     title: 'Participação na população da unidade (%)',
                     rangemode: 'tozero',
-                    range: rankZoom.xaxis || [0, rankScaleMax],
+                    range: zoomRanking.xaxis || [0, maiorPercentual],
                     minallowed: 0,
-                    maxallowed: rankScaleMax,
+                    maxallowed: maiorPercentual,
                     tickfont: { size: 10.5 }
                   },
                   yaxis: {
@@ -141,26 +140,26 @@ export default function RankingTab({
                     title: 'Unidade',
                     automargin: true,
                     autorange: 'reversed',
-                    range: rankZoom.yaxis || [rankTop.length - 0.5, -0.5],
+                    range: zoomRanking.yaxis || [ranking.length - 0.5, -0.5],
                     minallowed: -0.5,
-                    maxallowed: rankTop.length - 0.5,
+                    maxallowed: ranking.length - 0.5,
                     tickfont: { size: 10.5 }
                   },
                   margin: { l: 155, r: 45, t: 20, b: 65 },
-                  height: rankPlotHeight
+                  height: alturaGrafico
                 }}
                 config={plotConfig}
-                style={{ width: '100%', height: rankPlotHeight }}
+                style={{ width: '100%', height: alturaGrafico }}
                 useResizeHandler
-                onRelayout={evento => zoomEventRanges(evento, rankZoom, {
-                  xaxis: { min: 0, max: rankScaleMax, minSpan: Math.max(0.001, rankScaleMax / 100), maxSpan: rankScaleMax },
-                  yaxis: { min: -0.5, max: rankTop.length - 0.5, minSpan: 1, maxSpan: rankTop.length, reverse: true }
+                onRelayout={evento => atualizarIntervalosZoom(evento, zoomRanking, {
+                  xaxis: { min: 0, max: maiorPercentual, minSpan: Math.max(0.001, maiorPercentual / 100), maxSpan: maiorPercentual },
+                  yaxis: { min: -0.5, max: ranking.length - 0.5, minSpan: 1, maxSpan: ranking.length, reverse: true }
                 }, setRankZoom)}
                 onClick={evento => {
                   const unidadeClicada = evento.points?.[0]?.y;
                   if (unidadeClicada) {
-                    setSelectedUnit(unidadeClicada);
-                    setHeatGroup(rankGroup);
+                    setUnidadeSelecionada(unidadeClicada);
+                    setGrupoCalor(grupoRanking);
                   }
                 }}
               />
